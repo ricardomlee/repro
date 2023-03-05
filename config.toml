@@ -1,0 +1,6 @@
+[proxies]
+"example.com" = "http://localhost:8080"
+"api.example.com" = "http://localhost:8081"
+
+[cert]
+dir = "/var/lib/acme"
