@@ -1,0 +1,6 @@
+[proxies]
+"example.ml" = "http://localhost:8080"
+"api.example.ml" = "http://localhost:8081"
+
+[cert]
+dir = "/config/cert"
