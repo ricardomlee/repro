@@ -3,4 +3,4 @@
 "api.example.ml" = "http://localhost:8081"
 
 [cert]
-dir = "/config/cert"
+dir = "config/cert"
