@@ -19,7 +19,7 @@ type Config struct {
 func main() {
 	// 读取配置文件
 	config := Config{}
-	if _, err := toml.DecodeFile("/config/repro.toml", &config); err != nil {
+	if _, err := toml.DecodeFile("config/repro.toml", &config); err != nil {
 		log.Fatal(err)
 	}
 
@@ -96,5 +96,4 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-
 }
