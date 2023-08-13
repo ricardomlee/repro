@@ -13,7 +13,10 @@ import (
 
 type Config struct {
 	Proxies map[string]string
-	Cert    struct{ Dir string }
+	Cert    struct {
+		Dir   string
+		Cache string
+	}
 }
 
 func main() {
@@ -48,12 +51,12 @@ func main() {
 		}
 	})
 
-	if config.Cert.Dir != "" { // 使用HTTPS
-		log.Println("Using cert cache dir", config.Cert.Dir)
+	if config.Cert.Cache != "" { // 使用HTTPS, autocert生成证书
+		log.Println("autocert cache dir", config.Cert.Cache)
 		// 设置证书管理器
 		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			Cache:      autocert.DirCache(config.Cert.Dir),
+			Cache:      autocert.DirCache(config.Cert.Cache),
 			HostPolicy: autocert.HostWhitelist(domains...),
 		}
 
@@ -80,6 +83,45 @@ func main() {
 			Addr:      ":http",
 			Handler:   m.HTTPHandler(nil),
 			TLSConfig: tlsConfig,
+		}
+		log.Println("Starting HTTP server on :http")
+		if err := httpServer.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	} else if config.Cert.Dir != "" { // 使用HTTPS, 自定义证书目录
+		// 加载证书和私钥文件
+		cert, err := tls.LoadX509KeyPair(
+			config.Cert.Dir+"/cert.pem",
+			config.Cert.Dir+"/key.pem",
+		)
+		if err != nil {
+			log.Fatal("Failed to load certificate and key: ", err)
+		}
+
+		// 创建自定义的 TLS 配置
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+		server := &http.Server{
+			Addr:      ":https",
+			Handler:   mux,
+			TLSConfig: tlsConfig,
+		}
+
+		// 启动HTTPS服务器
+		go func() {
+			log.Println("Starting HTTPS server on :https")
+			if err := server.ListenAndServeTLS("", ""); err != nil {
+				log.Fatal(err)
+			}
+		}()
+
+		// 创建HTTP服务器并重定向到HTTPS服务器
+		httpServer := &http.Server{
+			Addr: ":http",
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusPermanentRedirect)
+			}),
 		}
 		log.Println("Starting HTTP server on :http")
 		if err := httpServer.ListenAndServe(); err != nil {
