@@ -3,4 +3,5 @@
 "api.example.ml" = "http://localhost:8081"
 
 [cert]
-dir = "config/cert"
+dir = "config/cert" # prepare dir/cert.pem, dir/key.pem
+# cache = "config/cert" (use autocert)
